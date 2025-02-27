@@ -1,26 +1,64 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
+import { Message } from './entities/message.entity';
 
 @Injectable()
 export class MessagesService {
+  private lastMessageId = 0;
+  private messages: Message[] = [
+    {
+      id: ++this.lastMessageId,
+      content: 'Hello world!',
+      sender: 'NestJS',
+      recipient: 'you',
+      createdAt: new Date(),
+      read: false,
+    },
+  ];
+
   create(createMessageDto: CreateMessageDto) {
-    return 'This action adds a new message';
+    this.messages.push({
+      id: ++this.lastMessageId,
+      ...createMessageDto,
+      createdAt: new Date(),
+    });
+
+    return this.messages[this.messages.length - 1];
   }
 
   findAll() {
-    return `This action returns all messages`;
+    return this.messages;
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} message`;
+    const recado = this.messages.find(message => message.id === id);
+
+    if (!recado) {
+      throw new NotFoundException('Message not found');
+    }
+    return recado;
   }
 
   update(id: number, updateMessageDto: UpdateMessageDto) {
-    return `This action updates a #${id} message`;
+    const message = this.messages.find(message => message.id === id);
+    if (!message) {
+      throw new NotFoundException('Message not found');
+    }
+
+    this.messages = this.messages.map(message =>
+      message.id === id ? { ...message, ...updateMessageDto } : message,
+    );
+
+    return this.messages.find(message => message.id === id);
   }
 
   remove(id: number) {
-    return `This action removes a #${id} message`;
+    const message = this.messages.find(message => message.id === id);
+    if (!message) {
+      throw new NotFoundException('Message not found');
+    }
+    this.messages = this.messages.filter(message => message.id !== id);
+    return;
   }
 }
