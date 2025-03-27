@@ -13,7 +13,6 @@ import { MessagesModule } from './messages/messages.module';
       password: 'postgres',
       host: 'localhost',
       port: 5432,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
       autoLoadEntities: true,
       synchronize: true, // Don't use in production
     }),

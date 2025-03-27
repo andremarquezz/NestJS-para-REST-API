@@ -1,64 +1,69 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { Message } from './entities/message.entity';
 
 @Injectable()
 export class MessagesService {
-  private lastMessageId = 0;
-  private messages: Message[] = [
-    {
-      id: ++this.lastMessageId,
-      content: 'Hello world!',
-      sender: 'NestJS',
-      recipient: 'you',
-      createdAt: new Date(),
-      read: false,
-    },
-  ];
+  constructor(
+    @InjectRepository(Message)
+    private readonly _repository: Repository<Message>,
+  ) {}
 
-  create(createMessageDto: CreateMessageDto) {
-    this.messages.push({
-      id: ++this.lastMessageId,
+  createAsync(createMessageDto: CreateMessageDto) {
+    const newMessage = {
       ...createMessageDto,
       createdAt: new Date(),
+    };
+    const message = this._repository.create(newMessage);
+    return this._repository.save(message);
+  }
+
+  async findAllAsync() {
+    return this._repository.find();
+  }
+
+  async findOneAsync(id: number) {
+    const message = await this._repository.findOne({
+      where: { id },
     });
 
-    return this.messages[this.messages.length - 1];
-  }
-
-  findAll() {
-    return this.messages;
-  }
-
-  findOne(id: number) {
-    const recado = this.messages.find(message => message.id === id);
-
-    if (!recado) {
+    if (!message) {
       throw new NotFoundException('Message not found');
     }
-    return recado;
+    return message;
   }
 
-  update(id: number, updateMessageDto: UpdateMessageDto) {
-    const message = this.messages.find(message => message.id === id);
+  async updateAsync(
+    id: number,
+    updateMessageDto: UpdateMessageDto,
+  ): Promise<Message> {
+    const partialUpdateDto = {
+      read: updateMessageDto?.read,
+      content: updateMessageDto?.content,
+    };
+
+    const message = await this._repository.preload({
+      id,
+      ...partialUpdateDto,
+    });
+
     if (!message) {
       throw new NotFoundException('Message not found');
     }
 
-    this.messages = this.messages.map(message =>
-      message.id === id ? { ...message, ...updateMessageDto } : message,
-    );
-
-    return this.messages.find(message => message.id === id);
+    return this._repository.save(message);
   }
 
-  remove(id: number) {
-    const message = this.messages.find(message => message.id === id);
+  async removeAsync(id: number) {
+    const message = await this._repository.findOneBy({ id });
+
     if (!message) {
       throw new NotFoundException('Message not found');
     }
-    this.messages = this.messages.filter(message => message.id !== id);
-    return;
+
+    return this._repository.remove(message);
   }
 }

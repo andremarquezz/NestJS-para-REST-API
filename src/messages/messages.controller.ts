@@ -17,18 +17,18 @@ export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
-  create(@Body() createMessageDto: CreateMessageDto) {
-    return this.messagesService.create(createMessageDto);
+  createAsync(@Body() createMessageDto: CreateMessageDto) {
+    return this.messagesService.createAsync(createMessageDto);
   }
 
   @Get()
   findAll() {
-    return this.messagesService.findAll();
+    return this.messagesService.findAllAsync();
   }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.messagesService.findOne(id);
+    return this.messagesService.findOneAsync(id);
   }
 
   @Patch(':id')
@@ -36,11 +36,11 @@ export class MessagesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateMessageDto: UpdateMessageDto,
   ) {
-    return this.messagesService.update(id, updateMessageDto);
+    return this.messagesService.updateAsync(id, updateMessageDto);
   }
 
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
-    return this.messagesService.remove(id);
+    return this.messagesService.removeAsync(id);
   }
 }
